@@ -1,5 +1,5 @@
-/* Manifest version: XYk3044d */
-self.importScripts('./service-worker-assets.js');
+/* Manifest version: 9KRU3YlZ */
+self.importScripts('/TestPage/service-worker-assets.js');
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
@@ -7,7 +7,8 @@ const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [
     /\.dll$/, /\.pdb$/, /\.wasm$/, /\.html$/, /\.js$/, /\.json$/,
     /\.css$/, /\.woff2?$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/,
-    /\.blat$/, /\.dat$/, /\.webmanifest$/, /\.br$/, /\.gz$/
+    /\.blat$/, /\.dat$/, /\.webmanifest$/, /\.br$/, /\.gz$/,
+    /material-icons/, /fonts/
 ];
 
 const offlineAssetsExclude = [/^service-worker\.js$/];
@@ -25,7 +26,7 @@ self.addEventListener('install', event => {
             }));
 
         await cache.addAll(requests);
-        await cache.add('/index.html');
+        await cache.add('/TestPage/index.html');
 
         self.skipWaiting();
     })());
@@ -86,7 +87,7 @@ self.addEventListener('fetch', event => {
         if (cached) return cached;
 
         if (event.request.mode === 'navigate') {
-            const index = await cache.match('/index.html');
+            const index = await cache.match('/TestPage/index.html');
             if (index) return index;
         }
 

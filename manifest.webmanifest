@@ -2,7 +2,7 @@
   "name": "WasmTest01",
   "short_name": "WasmTest01",
   "id": "./",
-  "start_url": "/",
+  "start_url": "/TestPage/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
