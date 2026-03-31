@@ -7,7 +7,7 @@ const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [
     /\.dll$/, /\.pdb$/, /\.wasm$/, /\.html$/, /\.js$/, /\.json$/,
     /\.css$/, /\.woff2?$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/,
-    /\.blat$/, /\.dat$/, /\.webmanifest$/
+    /\.blat$/, /\.dat$/, /\.webmanifest$/, /\.br$/, /\.gz$/
 ];
 
 const offlineAssetsExclude = [/^service-worker\.js$/];
@@ -48,7 +48,40 @@ self.addEventListener('fetch', event => {
 
     event.respondWith((async () => {
         const cache = await caches.open(cacheName);
+        const acceptEncoding = event.request.headers.get('Accept-Encoding') || '';
+        const url = new URL(event.request.url);
+        let tryCompressed = false;
+        let compressedExt = '';
 
+        // Only try for same-origin requests
+        if (url.origin === self.location.origin) {
+            if (acceptEncoding.includes('br')) {
+                tryCompressed = true;
+                compressedExt = '.br';
+            } else if (acceptEncoding.includes('gzip') || acceptEncoding.includes('gz')) {
+                tryCompressed = true;
+                compressedExt = '.gz';
+            }
+        }
+
+        // Try to serve compressed file if available
+        if (tryCompressed) {
+            let compressedUrl = url.pathname + compressedExt + url.search;
+            let compressedReq = new Request(compressedUrl, { method: 'GET' });
+            let cachedCompressed = await cache.match(compressedReq, { ignoreSearch: true });
+            if (cachedCompressed) {
+                // Set correct Content-Encoding header
+                let headers = new Headers(cachedCompressed.headers);
+                headers.set('Content-Encoding', compressedExt === '.br' ? 'br' : 'gzip');
+                return new Response(await cachedCompressed.arrayBuffer(), {
+                    status: cachedCompressed.status,
+                    statusText: cachedCompressed.statusText,
+                    headers: headers
+                });
+            }
+        }
+
+        // Fallback to normal cache
         const cached = await cache.match(event.request, { ignoreSearch: true });
         if (cached) return cached;
 
